@@ -1,0 +1,6 @@
+name = "thai-my-world-voice"
+main = "cloudflare-worker.js"
+compatibility_date = "2026-09-23"
+
+# Add the secret after deployment:
+# npx wrangler secret put GOOGLE_TTS_API_KEY
