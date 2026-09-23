@@ -10,12 +10,59 @@ let dailyStats=JSON.parse(localStorage.getItem("thaiWorldDailyStats")||"{}");
 
 function todayKey(){return new Date().toISOString().slice(0,10)}
 function pid(mod,idx){return mod+"-"+idx}
-function speak(text){
+let speechMode=localStorage.getItem("thaiSpeechMode")||"learn";
+let selectedVoiceName=localStorage.getItem("thaiVoiceName")||"";
+
+function getThaiVoices(){
+  if(!("speechSynthesis" in window))return[];
+  return speechSynthesis.getVoices().filter(v=>(v.lang||"").toLowerCase().startsWith("th"));
+}
+function bestThaiVoice(){
+  const voices=getThaiVoices();
+  if(selectedVoiceName){
+    const chosen=voices.find(v=>v.name===selectedVoiceName);
+    if(chosen)return chosen;
+  }
+  return voices.find(v=>/enhanced|premium|siri/i.test(v.name))||voices.find(v=>v.localService)||voices[0]||null;
+}
+function makeThaiUtterance(text,mode=speechMode){
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang="th-TH";
+  u.rate=mode==="learn"?.60:.86;
+  u.pitch=1.0;
+  const voice=bestThaiVoice();
+  if(voice)u.voice=voice;
+  return u;
+}
+function speak(text,mode=speechMode){
   if(!("speechSynthesis" in window)){alert("Thai speech is not available in this browser.");return}
   speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text); u.lang="th-TH"; u.rate=.76;
-  const voices=speechSynthesis.getVoices(); const thai=voices.find(v=>(v.lang||"").toLowerCase().startsWith("th"));
-  if(thai)u.voice=thai; speechSynthesis.speak(u);
+  speechSynthesis.speak(makeThaiUtterance(text,mode));
+}
+function loadVoiceControls(){
+  const select=document.getElementById("thaiVoiceSelect");
+  if(!select)return;
+  const voices=getThaiVoices();
+  select.innerHTML='<option value="">Best available Thai voice</option>'+voices.map(v=>`<option value="${v.name.replace(/"/g,"&quot;")}">${v.name} · ${v.lang}</option>`).join("");
+  if(selectedVoiceName&&voices.some(v=>v.name===selectedVoiceName))select.value=selectedVoiceName;
+  select.onchange=()=>{
+    selectedVoiceName=select.value;
+    localStorage.setItem("thaiVoiceName",selectedVoiceName);
+    speak("สวัสดีครับ นี่คือเสียงภาษาไทยที่คุณเลือก",speechMode);
+  };
+  const learn=document.getElementById("voiceLearn"),natural=document.getElementById("voiceNatural"),test=document.getElementById("voiceTest");
+  const sync=()=>{
+    if(learn)learn.classList.toggle("good",speechMode==="learn");
+    if(natural)natural.classList.toggle("good",speechMode==="natural");
+  };
+  if(learn)learn.onclick=()=>{speechMode="learn";localStorage.setItem("thaiSpeechMode",speechMode);sync();speak("ลองฟังช้าๆ ชัดๆ นะครับ","learn");};
+  if(natural)natural.onclick=()=>{speechMode="natural";localStorage.setItem("thaiSpeechMode",speechMode);sync();speak("ลองฟังแบบธรรมชาตินะครับ","natural");};
+  if(test)test.onclick=()=>speak("เราต้องทำอะไรบ้างครับ");
+  sync();
+}
+if("speechSynthesis" in window){
+  speechSynthesis.addEventListener?.("voiceschanged",loadVoiceControls);
+  setTimeout(loadVoiceControls,150);
 }
 function ensureDay(){
   const k=todayKey();
@@ -176,5 +223,5 @@ if(importEl)importEl.onchange=async e=>{
   const file=e.target.files&&e.target.files[0];if(!file)return;
   try{const data=JSON.parse(await file.text());if(data.scores)localStorage.setItem("thaiWorldScores",JSON.stringify(data.scores));if(data.custom)localStorage.setItem("thaiWorldCustom",JSON.stringify(data.custom));if(data.dailyStats)localStorage.setItem("thaiWorldDailyStats",JSON.stringify(data.dailyStats));document.getElementById("backupStatus").textContent="Backup restored. Reopen the app."}catch(err){document.getElementById("backupStatus").textContent="That backup file could not be read."}
 };
-renderToday();renderModules();renderNoon();renderCustom();renderReading();renderGrammar();renderVocab();renderGrades();renderStreak();
+renderToday();renderModules();renderNoon();renderCustom();renderReading();renderGrammar();renderVocab();renderGrades();renderStreak();loadVoiceControls();
 if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
