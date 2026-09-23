@@ -38,10 +38,37 @@
       <p id="lessonGoal"></p>
     </div>
 
+    <div class="card" id="todayFocusCard" style="margin-bottom:12px">
+      <div class="label">My focus</div>
+      <div class="bigline" id="todayFocusSummary">All vocabulary sets</div>
+      <div class="note">Your selected sets steer daily lessons, flashcards, and vocabulary review.</div>
+      <div class="actions"><button id="changeFocusBtn">Choose vocabulary sets</button></div>
+    </div>
+
     <div class="card" style="margin-bottom:12px">
       <div class="label">Voice playback</div>
       <div class="form-row">
-        <label for="thaiVoiceSelect">Thai voice</label>
+        <label for="voiceProvider">Voice source</label>
+        <select id="voiceProvider">
+          <option value="neural">Neural Thai - Google Chirp 3 HD</option>
+          <option value="device">iPhone / browser Thai voice</option>
+        </select>
+      </div>
+      <div class="form-row" id="neuralVoiceRow">
+        <label for="neuralVoiceSelect">Neural Thai voice</label>
+        <select id="neuralVoiceSelect">
+          <option value="th-TH-Chirp3-HD-Achird">Achird - male</option>
+          <option value="th-TH-Chirp3-HD-Charon">Charon - male</option>
+          <option value="th-TH-Chirp3-HD-Aoede">Aoede - female</option>
+          <option value="th-TH-Chirp3-HD-Kore">Kore - female</option>
+        </select>
+      </div>
+      <div class="form-row" id="backendUrlRow">
+        <label for="neuralBackendUrl">Neural voice backend</label>
+        <input id="neuralBackendUrl" type="url" placeholder="https://thai-my-world-voice....workers.dev">
+      </div>
+      <div class="form-row" id="deviceVoiceRow">
+        <label for="thaiVoiceSelect">iPhone Thai voice</label>
         <select id="thaiVoiceSelect"><option value="">Best available Thai voice</option></select>
       </div>
       <div class="actions">
@@ -49,7 +76,7 @@
         <button id="voiceNatural">Natural speed</button>
         <button id="voiceTest">Test voice</button>
       </div>
-      <div class="note">Learn mode slows the full sentence for clarity. Natural mode lets you hear normal conversational rhythm. Your choice is saved on this iPhone.</div>
+      <div class="note" id="voiceStatus">Neural mode uses a private server-side credential. If it is not configured, playback automatically falls back to the iPhone Thai voice.</div>
     </div>
 
     <div class="card">
