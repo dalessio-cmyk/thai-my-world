@@ -1,0 +1,12 @@
+{
+  "name": "Thai: My World",
+  "short_name": "Thai",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f5f3ee",
+  "theme_color": "#111827",
+  "description": "A personal Thai teacher for production, business, daily life, and Noon."
+}
