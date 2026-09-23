@@ -31,7 +31,8 @@ let speechMode=localStorage.getItem("thaiSpeechMode")||"learn";
 let selectedVoiceName=localStorage.getItem("thaiVoiceName")||"";
 let voiceProvider=localStorage.getItem("thaiVoiceProvider")||"neural";
 let neuralVoiceName=localStorage.getItem("thaiNeuralVoice")||"th-TH-Chirp3-HD-Achird";
-let neuralBackendUrl=localStorage.getItem("thaiNeuralBackendUrl")||"";
+const DEFAULT_NEURAL_BACKEND_URL="https://thai-my-world.dalessioinc.workers.dev";
+let neuralBackendUrl=(localStorage.getItem("thaiNeuralBackendUrl")||"").trim()||DEFAULT_NEURAL_BACKEND_URL;
 let currentAudio=null;
 
 function setVoiceStatus(message){
@@ -119,7 +120,7 @@ function loadVoiceControls(){
     if(back)back.style.display=voiceProvider==="neural"?"grid":"none";
     if(device)device.style.display=voiceProvider==="device"?"grid":"none";
     if(voiceProvider==="neural"){
-      setVoiceStatus(neuralBackendUrl?"Neural Thai is selected.":"Neural Thai is selected. Add the private backend URL once it is deployed; until then the app falls back to the iPhone voice.");
+      setVoiceStatus("Neural Thai is selected and ready to use online.");
     }else{
       setVoiceStatus("Using the Thai voice provided by this iPhone/browser.");
     }
@@ -135,7 +136,8 @@ function loadVoiceControls(){
     localStorage.setItem("thaiNeuralVoice",neuralVoiceName);
   };
   backend.onchange=()=>{
-    neuralBackendUrl=backend.value.trim();
+    neuralBackendUrl=backend.value.trim()||DEFAULT_NEURAL_BACKEND_URL;
+    backend.value=neuralBackendUrl;
     localStorage.setItem("thaiNeuralBackendUrl",neuralBackendUrl);
     syncProviderUI();
   };

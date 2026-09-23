@@ -24,13 +24,13 @@ Cloud Text-to-Speech synthesis uses OAuth. This Worker uses a Google Cloud servi
 Google recommends workload identity federation for external-cloud production workloads. For this small personal app, a narrowly scoped service-account key stored as an encrypted Worker secret is the simpler deployment. Rotate or delete the key if the Worker is retired.
 
 ## Cloudflare Worker setup
-1. Create a Worker named `thai-my-world-voice`.
+1. Use the Worker named `thai-my-world`.
 2. Paste `cloudflare-worker.js` into the Worker, or deploy this directory with Wrangler.
 3. In Worker Settings > Variables and Secrets, add an encrypted secret named:
    `GOOGLE_SERVICE_ACCOUNT_JSON`
 4. Paste the entire contents of the downloaded Google service-account JSON file as the secret value.
 5. Deploy the Worker.
-6. Copy its `.workers.dev` URL.
-7. In Thai: My World, paste that URL into Neural voice backend.
+6. The production URL is `https://thai-my-world.dalessioinc.workers.dev`.
+7. Thai: My World uses that URL by default. No manual setup is needed in the app. The backend field remains available for an optional override; clearing it restores the production default.
 
 The Google service-account JSON must never be stored in index.html, app.js, GitHub Pages, localStorage, or any public repository.

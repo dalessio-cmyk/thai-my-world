@@ -1,4 +1,4 @@
-const CACHE='thai-my-world-v3';
+const CACHE='thai-my-world-v4';
 const ASSETS=[
   './',
   './index.html',
