@@ -58,3 +58,10 @@
     .grade-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;text-align:center}
     .grade-big{font-size:72px;line-height:1;font-weight:800;letter-spacing:-3px;margin:8px 0}
     .history-row{display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+
+    .focus-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px}
+    @media(min-width:720px){.focus-grid{grid-template-columns:1fr 1fr}}
+    .focus-option{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:11px;background:#fff}
+    .focus-option input{width:auto;margin-top:3px}
+    .focus-option span{display:flex;flex-direction:column;gap:2px}
+    .focus-option small{color:var(--muted)}
