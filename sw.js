@@ -1,4 +1,4 @@
-const CACHE='thai-my-world-v2';
+const CACHE='thai-my-world-v3';
 const ASSETS=[
   './',
   './index.html',
@@ -15,6 +15,10 @@ const ASSETS=[
   './data/social.js',
   './data/partners.js',
   './noon.js',
+  './letters.js',
+  './voice.js',
+  './grammar.js',
+  './vocab.js',
   './app.js'
 ];
 
