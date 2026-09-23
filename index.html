@@ -26,7 +26,7 @@
   <nav id="nav">
     <button data-tab="today" class="active">Today</button>
     <button data-tab="modules">My World</button>
-    <button data-tab="practice">Practice</button>
+    <button data-tab="practice">Practice</button><button data-tab="flashcards">Flashcards</button><button data-tab="reading">Read</button>
     <button data-tab="noon">Noon</button>
     <button data-tab="mine">My Phrases</button><button data-tab="install">Install</button>
   </nav>
@@ -79,6 +79,16 @@
     <div class="hero"><div class="eyebrow">Curriculum</div><h2>Your universe of actions</h2><p>Choose the situation you need now. The daily teacher rotates through these and brings weak phrases back.</p></div>
     <div id="moduleList" class="module-list"></div>
     <div id="moduleDetail" style="margin-top:12px"></div>
+  </section>
+
+  <section id="flashcards" class="section">
+    <div class="hero"><div class="eyebrow">Your voice</div><h2>Flashcards from how you actually speak</h2><p>Recall the Thai for phrases and sentence patterns you already use in work and daily life.</p></div>
+    <div class="card" id="flashCard"></div>
+  </section>
+
+  <section id="reading" class="section">
+    <div class="hero"><div class="eyebrow">Reading</div><h2>Learn to read what you already know how to say</h2><p>Letters first in useful words, then syllables, words, and full phrases from your world.</p></div>
+    <div id="readingHome"></div>
   </section>
 
   <section id="practice" class="section">
@@ -153,6 +163,8 @@
 <script src="data/social.js"></script>
 <script src="data/partners.js"></script>
 <script src="noon.js"></script>
+<script src="letters.js"></script>
+<script src="voice.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
