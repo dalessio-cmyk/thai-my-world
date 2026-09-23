@@ -1,0 +1,22 @@
+const voicePhrases = [
+  {en:"What do we need to do?", th:"เราต้องทำอะไรบ้างครับ", phon:"rao dtâwng tham à-rai bâang khráp", note:"Your recurring action-first question. บ้าง opens the answer to a list of things."},
+  {en:"Can we do that?", th:"ทำแบบนั้นได้ไหมครับ", phon:"tham bɛ̀ɛp nán dâi mái khráp", note:"Direct feasibility check."},
+  {en:"How do we resolve this?", th:"เรื่องนี้แก้ยังไงครับ", phon:"rʉ̂ang níi kɛ̂ɛ yang-ngai khráp", note:"Natural spoken Thai for solving a problem."},
+  {en:"Let me check first.", th:"เดี๋ยวผมเช็กก่อนครับ", phon:"dǐao phǒm chék kɔ̀ɔn khráp", note:"Very close to how you already speak. ก่อน = first."},
+  {en:"Do we still need this?", th:"อันนี้ยังต้องใช้อยู่ไหมครับ", phon:"an níi yang dtâwng chái yùu mái khráp", note:"Useful for documents, equipment, steps, or requirements."},
+  {en:"Do we still need the company name in there?", th:"ยังต้องใส่ชื่อบริษัทอยู่ไหมครับ", phon:"yang dtâwng sài chʉ̂ʉ bɔɔ-rí-sàt yùu mái khráp", note:"Built from an actual recurring admin question."},
+  {en:"Give me the full example.", th:"ขอตัวอย่างแบบครบๆ หน่อยครับ", phon:"khɔ̌ɔ dtua-yàang bɛ̀ɛp khróp-khróp nɔ̀i khráp", note:"Your preference for seeing the complete version."},
+  {en:"What is the expense description for this?", th:"รายการค่าใช้จ่ายนี้ควรเขียนว่าอะไรครับ", phon:"raai-gaan khâa-chái-jàai níi khuan khǐan wâa à-rai khráp", note:"Accounting/admin wording."},
+  {en:"Who paid for this?", th:"อันนี้ใครเป็นคนจ่ายครับ", phon:"an níi khrai bpen khon jàai khráp", note:"Short and natural."},
+  {en:"Was this paid by card?", th:"อันนี้จ่ายด้วยบัตรใช่ไหมครับ", phon:"an níi jàai dûai bàt châi mái khráp", note:"Confirmation question."},
+  {en:"This is for the first one.", th:"อันนี้สำหรับอันแรกครับ", phon:"an níi sǎm-ràp an rɛ̂ɛk khráp", note:"A direct sequencing phrase you use often."},
+  {en:"Should we say 30,000 to 45,000?", th:"ใส่สามหมื่นถึงสี่หมื่นห้าดีไหมครับ", phon:"sài sǎam-mʉ̀ʉn thʉ̌ng sìi-mʉ̀ʉn-hâa dii mái khráp", note:"Natural way to propose a salary range."},
+  {en:"What’s blocking this?", th:"ตอนนี้ติดตรงไหนครับ", phon:"dton-níi dtìt dtrong-nǎi khráp", note:"Useful with staff, vendors, or production."},
+  {en:"Give me a short summary.", th:"ขอสรุปสั้นๆ ครับ", phon:"khɔ̌ɔ sà-rùp sân-sân khráp", note:"Meeting language that matches your concise style."},
+  {en:"Let’s get this ready.", th:"เตรียมอันนี้ให้พร้อมกันครับ", phon:"dtriam an níi hâi phrɔ́ɔm gan khráp", note:"Action-oriented team instruction."},
+  {en:"We need this by Friday.", th:"เราต้องได้อันนี้ภายในวันศุกร์ครับ", phon:"rao dtâwng dâi an níi phaai-nai wan-sùk khráp", note:"Deadline language."},
+  {en:"I’m just trying to get them a budget.", th:"ผมแค่พยายามทำงบให้เขาครับ", phon:"phǒm khâe phá-yaa-yaam tham ngóp hâi khǎo khráp", note:"Business-production tone without sounding formal."},
+  {en:"Let’s keep it simple.", th:"เอาแบบง่ายๆ ครับ", phon:"ao bɛ̀ɛp ngâai-ngâai khráp", note:"Very natural and useful for your working style."},
+  {en:"That doesn’t match.", th:"อันนี้ไม่ตรงครับ", phon:"an níi mâi dtrong khráp", note:"For figures, versions, documents, or expectations."},
+  {en:"Check this for me.", th:"ช่วยเช็กอันนี้ให้ผมหน่อยครับ", phon:"chûai chék an níi hâi phǒm nɔ̀i khráp", note:"A high-frequency request pattern."}
+];
