@@ -1,0 +1,30 @@
+name: Check Thai App
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check JavaScript syntax
+        run: |
+          node --check app.js
+          node --check voice.js
+          node --check letters.js
+          node --check grammar.js
+          node --check vocab.js
+          node --check noon.js
+          node --check data-bootstrap.js
+          node --check data/production.js
+          node --check data/vfx.js
+          node --check data/management.js
+          node --check data/finance.js
+          node --check data/vendor.js
+          node --check data/travel.js
+          node --check data/restaurant.js
+          node --check data/social.js
+          node --check data/partners.js
