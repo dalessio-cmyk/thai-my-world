@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Thai" />
+  <meta name="format-detection" content="telephone=no" />
+
+  <title>Thai: My World</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div>
+      <h1>Thai: My World</h1>
+      <div class="sub">Spoken Thai for production, business, daily life, and Noon.</div>
+    </div>
+    <div class="pill" id="streakPill">0 day streak</div>
+  </div>
+
+  <nav id="nav">
+    <button data-tab="today" class="active">Today</button>
+    <button data-tab="modules">My World</button>
+    <button data-tab="practice">Practice</button>
+    <button data-tab="noon">Noon</button>
+    <button data-tab="mine">My Phrases</button><button data-tab="install">Install</button>
+  </nav>
+
+  <section id="today" class="section active">
+    <div class="hero">
+      <div class="eyebrow" id="todayDate"></div>
+      <h2 id="lessonTitle"></h2>
+      <p id="lessonGoal"></p>
+    </div>
+
+    <div class="card">
+      <div class="label">12-minute method</div>
+      <div class="step"><div class="num">1</div><div>Listen to each phrase twice.</div></div>
+      <div class="step"><div class="num">2</div><div>Repeat it three times without reading the English.</div></div>
+      <div class="step"><div class="num">3</div><div>Use the phrases in the scenario drill.</div></div>
+      <div class="step"><div class="num">4</div><div>Mark what you know and what needs practice.</div></div>
+      <div class="step"><div class="num">5</div><div>Say the daily line to Noon naturally, not as a recitation.</div></div>
+      <div class="progress"><div class="bar" id="progressBar"></div></div>
+      <div class="tiny" id="progressText" style="margin-top:6px"></div>
+    </div>
+
+    <div id="todayPhrases" class="grid" style="margin-top:12px"></div>
+
+    <div class="grid two" style="margin-top:12px">
+      <div class="card">
+        <div class="label">Language pattern</div>
+        <div class="bigline" id="focusPattern"></div>
+        <div class="note" id="focusNote"></div>
+      </div>
+      <div class="card">
+        <div class="label">Scenario drill</div>
+        <div class="bigline" id="scenarioPrompt"></div>
+        <div class="actions"><button id="revealScenario">Reveal Thai</button></div>
+        <div class="quiz-answer" id="scenarioAnswer"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <div class="label">Say this to Noon today</div>
+      <div class="thai" id="dailyNoonThai"></div>
+      <div class="phon" id="dailyNoonPhon"></div>
+      <div class="eng" id="dailyNoonEng"></div>
+      <div class="note" id="dailyNoonNote"></div>
+      <div class="actions"><button id="dailyNoonSpeak">Hear it</button></div>
+    </div>
+  </section>
+
+  <section id="modules" class="section">
+    <div class="hero"><div class="eyebrow">Curriculum</div><h2>Your universe of actions</h2><p>Choose the situation you need now. The daily teacher rotates through these and brings weak phrases back.</p></div>
+    <div id="moduleList" class="module-list"></div>
+    <div id="moduleDetail" style="margin-top:12px"></div>
+  </section>
+
+  <section id="practice" class="section">
+    <div class="hero"><div class="eyebrow">Recall</div><h2>Say it before you see it</h2><p>Practice prioritizes phrases you marked “Need practice.”</p></div>
+    <div class="card" id="quizCard"></div>
+  </section>
+
+  <section id="noon" class="section">
+    <div class="hero"><div class="eyebrow">Marriage language</div><h2>Thai for Noon</h2><p>Affection, gratitude, reassurance, playful warmth, apology, and deeper feelings in natural spoken Thai.</p></div>
+    <div class="card" style="margin-bottom:12px">
+      <h3>Rule for this track</h3>
+      <div class="eng">Use her name. With a spouse, “นุ่น” often sounds warmer than repeatedly saying “คุณ.” You usually do not need “ครับ” in intimate lines. “นะ” softens a sentence and often makes affection sound more natural.</div>
+    </div>
+    <div id="noonList" class="grid"></div>
+  </section>
+
+  <section id="mine" class="section">
+    <div class="hero"><div class="eyebrow">Personal phrase queue</div><h2>Add what you actually need to say</h2><p>Save phrases from real situations so they enter your practice pool.</p></div>
+    <div class="card">
+      <div class="form-row"><label>Situation or English meaning</label><textarea id="customEng" placeholder="Example: Tell the contractor the valve is still leaking."></textarea></div>
+      <div class="form-row"><label>Thai</label><textarea id="customThai" placeholder="Paste or type the Thai phrase."></textarea></div>
+      <div class="form-row"><label>Pronunciation guide</label><input id="customPhon" placeholder="Optional"></div>
+      <button class="btn" id="saveCustom">Save phrase</button>
+    </div>
+    <div id="customList" class="grid" style="margin-top:12px"></div>
+  </section>
+
+  <section id="install" class="section">
+    <div class="hero">
+      <div class="eyebrow">iPhone</div>
+      <h2>Install on your Home Screen</h2>
+      <p>Once this app is hosted on HTTPS, install it directly from Safari. No App Store is involved.</p>
+    </div>
+
+    <div class="card">
+      <h3>Install</h3>
+      <div class="step"><div class="num">1</div><div>Open the hosted app link in <strong>Safari</strong>.</div></div>
+      <div class="step"><div class="num">2</div><div>Tap the Safari <strong>Share</strong> button.</div></div>
+      <div class="step"><div class="num">3</div><div>Choose <strong>Add to Home Screen</strong>.</div></div>
+      <div class="step"><div class="num">4</div><div>Turn on <strong>Open as Web App</strong> if your iPhone shows that option.</div></div>
+      <div class="step"><div class="num">5</div><div>Tap <strong>Add</strong>. Launch it from the new Thai icon.</div></div>
+      <div class="note">After the first successful load, the lesson app can open offline. Thai speech uses the voices installed on the iPhone and is triggered when you tap “Hear it.”</div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h3>Back up your progress</h3>
+      <div class="eng">Your progress is stored on this iPhone. Export a backup before clearing Safari data or moving to another phone.</div>
+      <div class="actions">
+        <button id="exportProgress">Export backup</button>
+        <label class="btn" style="display:inline-block">
+          Import backup
+          <input id="importProgress" type="file" accept="application/json" style="display:none">
+        </label>
+      </div>
+      <div class="note" id="backupStatus"></div>
+    </div>
+  </section>
+
+  <footer>
+    Pronunciation uses your device’s Thai speech voice when available. This version is designed around functional spoken Thai, with reading learned through repeated exposure rather than alphabet-first study.
+  </footer>
+</div>
+
+<script src="data-bootstrap.js"></script>
+<script src="data/production.js"></script>
+<script src="data/vfx.js"></script>
+<script src="data/management.js"></script>
+<script src="data/finance.js"></script>
+<script src="data/vendor.js"></script>
+<script src="data/travel.js"></script>
+<script src="data/restaurant.js"></script>
+<script src="data/social.js"></script>
+<script src="data/partners.js"></script>
+<script src="noon.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
