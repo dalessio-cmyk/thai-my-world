@@ -2,8 +2,25 @@ const schedule=["production","management","vendor","vfx","partners","finance","s
 const launch=new Date("2026-09-23T00:00:00");
 const now=new Date();
 const dayIndex=Math.max(0,Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate())-launch)/86400000));
-const key=schedule[dayIndex%schedule.length];
-const lesson=modules[key];
+const focusModuleMap={
+  cooking:["restaurant"],
+  shopping:["social","restaurant"],
+  filmmaking:["production","vfx"],
+  business:["management","partners"],
+  accounting:["finance"],
+  repairs:["vendor"],
+  travel:["travel"],
+  noon:["social"]
+};
+let selectedFocus=JSON.parse(localStorage.getItem("thaiFocusSets")||"[]");
+function getActiveModuleKey(){
+  if(!selectedFocus.length)return schedule[dayIndex%schedule.length];
+  const setKey=selectedFocus[dayIndex%selectedFocus.length];
+  const choices=focusModuleMap[setKey]||[schedule[dayIndex%schedule.length]];
+  return choices[Math.floor(dayIndex/Math.max(1,selectedFocus.length))%choices.length];
+}
+let key=getActiveModuleKey();
+let lesson=modules[key];
 const scores=JSON.parse(localStorage.getItem("thaiWorldScores")||"{}");
 let custom=JSON.parse(localStorage.getItem("thaiWorldCustom")||"[]");
 let dailyStats=JSON.parse(localStorage.getItem("thaiWorldDailyStats")||"{}");
@@ -12,7 +29,15 @@ function todayKey(){return new Date().toISOString().slice(0,10)}
 function pid(mod,idx){return mod+"-"+idx}
 let speechMode=localStorage.getItem("thaiSpeechMode")||"learn";
 let selectedVoiceName=localStorage.getItem("thaiVoiceName")||"";
+let voiceProvider=localStorage.getItem("thaiVoiceProvider")||"neural";
+let neuralVoiceName=localStorage.getItem("thaiNeuralVoice")||"th-TH-Chirp3-HD-Achird";
+let neuralBackendUrl=localStorage.getItem("thaiNeuralBackendUrl")||"";
+let currentAudio=null;
 
+function setVoiceStatus(message){
+  const el=document.getElementById("voiceStatus");
+  if(el)el.textContent=message;
+}
 function getThaiVoices(){
   if(!("speechSynthesis" in window))return[];
   return speechSynthesis.getVoices().filter(v=>(v.lang||"").toLowerCase().startsWith("th"));
@@ -34,36 +59,108 @@ function makeThaiUtterance(text,mode=speechMode){
   if(voice)u.voice=voice;
   return u;
 }
-function speak(text,mode=speechMode){
+function deviceSpeak(text,mode=speechMode){
   if(!("speechSynthesis" in window)){alert("Thai speech is not available in this browser.");return}
+  if(currentAudio){try{currentAudio.pause()}catch(e){} currentAudio=null;}
   speechSynthesis.cancel();
   speechSynthesis.speak(makeThaiUtterance(text,mode));
 }
+async function neuralSpeak(text,mode=speechMode){
+  if(!neuralBackendUrl)throw new Error("Neural voice backend is not configured");
+  setVoiceStatus("Generating neural Thai audio...");
+  const endpoint=neuralBackendUrl.replace(/\/$/,"")+"/tts";
+  const response=await fetch(endpoint,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({text,voice:neuralVoiceName,mode})
+  });
+  if(!response.ok)throw new Error("Neural voice request failed");
+  const blob=await response.blob();
+  const url=URL.createObjectURL(blob);
+  if(currentAudio){try{currentAudio.pause()}catch(e){}}
+  currentAudio=new Audio(url);
+  currentAudio.preload="auto";
+  currentAudio.onended=()=>{URL.revokeObjectURL(url);setVoiceStatus("Neural Thai ready.");};
+  currentAudio.onerror=()=>{URL.revokeObjectURL(url);setVoiceStatus("Neural audio could not play.");};
+  await currentAudio.play();
+  setVoiceStatus(mode==="learn"?"Neural Thai - Learn mode":"Neural Thai - Natural mode");
+}
+async function speak(text,mode=speechMode){
+  if(voiceProvider==="neural"){
+    try{
+      await neuralSpeak(text,mode);
+      return;
+    }catch(err){
+      setVoiceStatus("Neural voice unavailable - using the iPhone Thai voice.");
+    }
+  }
+  deviceSpeak(text,mode);
+}
 function loadVoiceControls(){
   const select=document.getElementById("thaiVoiceSelect");
-  if(!select)return;
+  const provider=document.getElementById("voiceProvider");
+  const neuralSelect=document.getElementById("neuralVoiceSelect");
+  const backend=document.getElementById("neuralBackendUrl");
+  if(!select||!provider||!neuralSelect||!backend)return;
+
   const voices=getThaiVoices();
   select.innerHTML='<option value="">Best available Thai voice</option>'+voices.map(v=>`<option value="${v.name.replace(/"/g,"&quot;")}">${v.name} · ${v.lang}</option>`).join("");
   if(selectedVoiceName&&voices.some(v=>v.name===selectedVoiceName))select.value=selectedVoiceName;
+
+  provider.value=voiceProvider;
+  neuralSelect.value=neuralVoiceName;
+  backend.value=neuralBackendUrl;
+
+  function syncProviderUI(){
+    const neural=document.getElementById("neuralVoiceRow");
+    const back=document.getElementById("backendUrlRow");
+    const device=document.getElementById("deviceVoiceRow");
+    if(neural)neural.style.display=voiceProvider==="neural"?"grid":"none";
+    if(back)back.style.display=voiceProvider==="neural"?"grid":"none";
+    if(device)device.style.display=voiceProvider==="device"?"grid":"none";
+    if(voiceProvider==="neural"){
+      setVoiceStatus(neuralBackendUrl?"Neural Thai is selected.":"Neural Thai is selected. Add the private backend URL once it is deployed; until then the app falls back to the iPhone voice.");
+    }else{
+      setVoiceStatus("Using the Thai voice provided by this iPhone/browser.");
+    }
+  }
+
+  provider.onchange=()=>{
+    voiceProvider=provider.value;
+    localStorage.setItem("thaiVoiceProvider",voiceProvider);
+    syncProviderUI();
+  };
+  neuralSelect.onchange=()=>{
+    neuralVoiceName=neuralSelect.value;
+    localStorage.setItem("thaiNeuralVoice",neuralVoiceName);
+  };
+  backend.onchange=()=>{
+    neuralBackendUrl=backend.value.trim();
+    localStorage.setItem("thaiNeuralBackendUrl",neuralBackendUrl);
+    syncProviderUI();
+  };
   select.onchange=()=>{
     selectedVoiceName=select.value;
     localStorage.setItem("thaiVoiceName",selectedVoiceName);
-    speak("สวัสดีครับ นี่คือเสียงภาษาไทยที่คุณเลือก",speechMode);
+    deviceSpeak("สวัสดีครับ นี่คือเสียงภาษาไทยที่คุณเลือก",speechMode);
   };
+
   const learn=document.getElementById("voiceLearn"),natural=document.getElementById("voiceNatural"),test=document.getElementById("voiceTest");
-  const sync=()=>{
+  const syncMode=()=>{
     if(learn)learn.classList.toggle("good",speechMode==="learn");
     if(natural)natural.classList.toggle("good",speechMode==="natural");
   };
-  if(learn)learn.onclick=()=>{speechMode="learn";localStorage.setItem("thaiSpeechMode",speechMode);sync();speak("ลองฟังช้าๆ ชัดๆ นะครับ","learn");};
-  if(natural)natural.onclick=()=>{speechMode="natural";localStorage.setItem("thaiSpeechMode",speechMode);sync();speak("ลองฟังแบบธรรมชาตินะครับ","natural");};
+  if(learn)learn.onclick=()=>{speechMode="learn";localStorage.setItem("thaiSpeechMode",speechMode);syncMode();speak("ลองฟังช้าๆ ชัดๆ นะครับ","learn");};
+  if(natural)natural.onclick=()=>{speechMode="natural";localStorage.setItem("thaiSpeechMode",speechMode);syncMode();speak("ลองฟังแบบธรรมชาตินะครับ","natural");};
   if(test)test.onclick=()=>speak("เราต้องทำอะไรบ้างครับ");
-  sync();
+  syncMode();
+  syncProviderUI();
 }
 if("speechSynthesis" in window){
   speechSynthesis.addEventListener?.("voiceschanged",loadVoiceControls);
   setTimeout(loadVoiceControls,150);
 }
+
 function ensureDay(){
   const k=todayKey();
   if(!dailyStats[k])dailyStats[k]={speaking:{right:0,total:0},reading:{right:0,total:0},vocabulary:{right:0,total:0},grammar:{right:0,total:0}};
@@ -89,6 +186,65 @@ function phraseCard(p,id,category="speaking"){
       <button class="${s===1?"warn":""}" onclick='mark(${JSON.stringify(id)},1,${JSON.stringify(category)})'>Need practice</button>
     </div></div>`;
 }
+function activeFocusKeys(){
+  return selectedFocus.length?selectedFocus:Object.keys(vocabSets);
+}
+function activeModuleKeys(){
+  if(!selectedFocus.length)return Object.keys(modules);
+  const keys=new Set();
+  selectedFocus.forEach(k=>(focusModuleMap[k]||[]).forEach(m=>keys.add(m)));
+  return [...keys];
+}
+function updateFocusSummary(){
+  const el=document.getElementById("todayFocusSummary");
+  if(!el)return;
+  if(!selectedFocus.length){el.textContent="All vocabulary sets";return}
+  el.textContent=selectedFocus.map(k=>vocabSets[k]?.name||k).join(" + ");
+}
+function focusEditorHtml(){
+  return `<div class="card" id="focusEditor">
+    <div class="label">My Focus</div>
+    <h3>Choose the vocabulary sets steering your lessons</h3>
+    <div class="note">Pick one or several. Choosing none means use everything.</div>
+    <div class="focus-grid">${Object.entries(vocabSets).map(([k,s])=>`
+      <label class="focus-option">
+        <input type="checkbox" class="focusCheck" value="${k}" ${selectedFocus.includes(k)?"checked":""}>
+        <span><strong>${s.name}</strong><small>${s.words.length} words</small></span>
+      </label>`).join("")}
+    </div>
+    <div class="actions">
+      <button onclick="saveFocusFromUI()">Save focus</button>
+      <button onclick="useAllFocus()">Use all sets</button>
+    </div>
+    <div class="note" id="focusStatus"></div>
+  </div>`;
+}
+function saveFocusFromUI(){
+  selectedFocus=[...document.querySelectorAll(".focusCheck:checked")].map(x=>x.value);
+  localStorage.setItem("thaiFocusSets",JSON.stringify(selectedFocus));
+  key=getActiveModuleKey();
+  lesson=modules[key];
+  updateFocusSummary();
+  renderToday();
+  renderVocab();
+  const status=document.getElementById("focusStatus");
+  if(status)status.textContent=selectedFocus.length?"Focus saved. Daily lessons and flashcards now follow these sets.":"All sets are active.";
+}
+function useAllFocus(){
+  selectedFocus=[];
+  localStorage.setItem("thaiFocusSets","[]");
+  key=getActiveModuleKey();
+  lesson=modules[key];
+  updateFocusSummary();
+  renderToday();
+  renderVocab();
+}
+function goToFocus(){
+  const btn=document.querySelector('nav button[data-tab="vocabulary"]');
+  if(btn)btn.click();
+  setTimeout(()=>document.getElementById("focusEditor")?.scrollIntoView({behavior:"smooth",block:"start"}),50);
+}
+
 function selectToday(){
   const arr=lesson.phrases; let picked=[];
   const weak=arr.map((p,i)=>[p,i]).filter(x=>scores[pid(key,x[1])]===1); picked.push(...weak.slice(0,2));
@@ -97,6 +253,9 @@ function selectToday(){
   return picked.slice(0,5);
 }
 function renderToday(){
+  key=getActiveModuleKey();
+  lesson=modules[key];
+  updateFocusSummary();
   const d=new Date();
   document.getElementById("todayDate").textContent=d.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
   document.getElementById("lessonTitle").textContent=lesson.name;
@@ -124,7 +283,9 @@ function openModule(k){
   document.getElementById("moduleDetail").scrollIntoView({behavior:"smooth"});
 }
 function allPractice(){
-  let items=[]; Object.entries(modules).forEach(([k,m])=>m.phrases.forEach((p,i)=>items.push({p,id:pid(k,i),score:scores[pid(k,i)]||0})));
+  let items=[];
+  const allowed=new Set(activeModuleKeys());
+  Object.entries(modules).filter(([k])=>allowed.has(k)).forEach(([k,m])=>m.phrases.forEach((p,i)=>items.push({p,id:pid(k,i),score:scores[pid(k,i)]||0})));
   custom.forEach((c,i)=>items.push({p:[c.thai,c.phon,c.eng,"Your saved phrase."],id:"custom-"+i,score:scores["custom-"+i]||0}));
   const weak=items.filter(x=>x.score===1),unseen=items.filter(x=>x.score===0),pool=weak.length?weak:unseen.length?unseen:items;
   return pool[Math.floor(Math.random()*pool.length)];
@@ -139,16 +300,26 @@ function newQuiz(){
   <button onclick='mark(${JSON.stringify(q.id)},1,"speaking");newQuiz()'>Again later</button></div></div>`;
 }
 let flashIndex=0;
+function flashPool(){
+  if(!selectedFocus.length)return voicePhrases;
+  const items=[];
+  selectedFocus.forEach(k=>{
+    const set=vocabSets[k];
+    if(set)set.phrases.forEach(p=>items.push({en:p[2],th:p[0],phon:p[1],note:"From "+set.name}));
+  });
+  return items.length?items:voicePhrases;
+}
 function renderFlashcard(){
-  if(!voicePhrases.length)return;
-  const p=voicePhrases[flashIndex%voicePhrases.length];
+  const pool=flashPool();
+  if(!pool.length)return;
+  const p=pool[flashIndex%pool.length];
   document.getElementById("flashCard").innerHTML=`<div class="label">You say this in English</div><div class="bigline">${p.en}</div>
   <div class="actions"><button onclick="document.getElementById('flashAnswer').classList.add('show')">Show Thai</button></div>
   <div class="quiz-answer" id="flashAnswer"><div class="thai">${p.th}</div><div class="phon">${p.phon}</div><div class="note">${p.note}</div>
   <div class="actions"><button onclick='speak(${JSON.stringify(p.th)})'>Hear it</button>
   <button onclick="record('speaking',true);nextFlash()">Got it</button><button onclick="record('speaking',false);nextFlash()">Need it again</button></div></div>`;
 }
-function nextFlash(){flashIndex=(flashIndex+1)%voicePhrases.length;renderFlashcard()}
+function nextFlash(){const pool=flashPool();flashIndex=(flashIndex+1)%Math.max(1,pool.length);renderFlashcard()}
 function renderReading(){
   const letters=thaiLetters.map((l,i)=>`<div class="card"><div class="label">Consonant · ${l[3]} class</div><div class="thai letter">${l[0]}</div><div class="bigline">${l[1]}</div><div class="phon">${l[2]}</div><div class="eng">Example: ${l[4]} · ${l[5]}</div><div class="actions"><button onclick='speak(${JSON.stringify(l[4])})'>Hear word</button><button onclick="record('reading',true)">Recognize</button><button onclick="record('reading',false)">Again</button></div></div>`).join("");
   const vowels=thaiVowels.map(v=>`<div class="card"><div class="label">Vowel</div><div class="thai">${v[0]}</div><div class="phon">${v[1]} · ${v[2]}</div><div class="eng">${v[3]} = ${v[4]}</div><div class="actions"><button onclick='speak(${JSON.stringify(v[3])})'>Hear it</button></div></div>`).join("");
@@ -172,7 +343,7 @@ function openVocabSet(k){
   document.getElementById("vocabDetail").scrollIntoView({behavior:"smooth"});
 }
 function renderVocab(){
-  document.getElementById("vocabHome").innerHTML=`<div class="module-list">${Object.entries(vocabSets).map(([k,s])=>`<button class="module-btn" onclick="openVocabSet('${k}')"><strong>${s.name}</strong><span>${s.words.length} words + useful sentences</span></button>`).join("")}</div><div id="vocabDetail" style="margin-top:12px"></div>`;
+  document.getElementById("vocabHome").innerHTML=focusEditorHtml()+`<div class="module-list" style="margin-top:12px">${Object.entries(vocabSets).map(([k,s])=>`<button class="module-btn" onclick="openVocabSet('${k}')"><strong>${s.name}</strong><span>${s.words.length} words + useful sentences</span></button>`).join("")}</div><div id="vocabDetail" style="margin-top:12px"></div>`;
 }
 function pct(x){return !x||!x.total?null:Math.round(x.right/x.total*100)}
 function letterGrade(n){if(n===null)return"—";if(n>=93)return"A";if(n>=85)return"B";if(n>=75)return"C";if(n>=65)return"D";return"Needs work"}
@@ -206,6 +377,8 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
   if(b.dataset.tab==="practice")newQuiz(); if(b.dataset.tab==="flashcards")renderFlashcard(); if(b.dataset.tab==="grades")renderGrades();
 });
 document.getElementById("revealScenario").onclick=()=>document.getElementById("scenarioAnswer").classList.toggle("show");
+const changeFocusBtn=document.getElementById("changeFocusBtn");
+if(changeFocusBtn)changeFocusBtn.onclick=goToFocus;
 document.getElementById("saveCustom").onclick=()=>{
   const eng=document.getElementById("customEng").value.trim(),thai=document.getElementById("customThai").value.trim(),phon=document.getElementById("customPhon").value.trim();
   if(!eng||!thai){alert("Add both the meaning/situation and the Thai phrase.");return}
@@ -214,14 +387,14 @@ document.getElementById("saveCustom").onclick=()=>{
 };
 const exportBtn=document.getElementById("exportProgress");
 if(exportBtn)exportBtn.onclick=()=>{
-  const data={exportedAt:new Date().toISOString(),scores,custom,dailyStats};
+  const data={exportedAt:new Date().toISOString(),scores,custom,dailyStats,selectedFocus,voiceProvider,neuralVoiceName,neuralBackendUrl,speechMode};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
   a.href=url;a.download="thai-my-world-backup.json";a.click();URL.revokeObjectURL(url);document.getElementById("backupStatus").textContent="Backup created.";
 };
 const importEl=document.getElementById("importProgress");
 if(importEl)importEl.onchange=async e=>{
   const file=e.target.files&&e.target.files[0];if(!file)return;
-  try{const data=JSON.parse(await file.text());if(data.scores)localStorage.setItem("thaiWorldScores",JSON.stringify(data.scores));if(data.custom)localStorage.setItem("thaiWorldCustom",JSON.stringify(data.custom));if(data.dailyStats)localStorage.setItem("thaiWorldDailyStats",JSON.stringify(data.dailyStats));document.getElementById("backupStatus").textContent="Backup restored. Reopen the app."}catch(err){document.getElementById("backupStatus").textContent="That backup file could not be read."}
+  try{const data=JSON.parse(await file.text());if(data.scores)localStorage.setItem("thaiWorldScores",JSON.stringify(data.scores));if(data.custom)localStorage.setItem("thaiWorldCustom",JSON.stringify(data.custom));if(data.dailyStats)localStorage.setItem("thaiWorldDailyStats",JSON.stringify(data.dailyStats));if(data.selectedFocus)localStorage.setItem("thaiFocusSets",JSON.stringify(data.selectedFocus));if(data.voiceProvider)localStorage.setItem("thaiVoiceProvider",data.voiceProvider);if(data.neuralVoiceName)localStorage.setItem("thaiNeuralVoice",data.neuralVoiceName);if(data.neuralBackendUrl)localStorage.setItem("thaiNeuralBackendUrl",data.neuralBackendUrl);if(data.speechMode)localStorage.setItem("thaiSpeechMode",data.speechMode);document.getElementById("backupStatus").textContent="Backup restored. Reopen the app."}catch(err){document.getElementById("backupStatus").textContent="That backup file could not be read."}
 };
-renderToday();renderModules();renderNoon();renderCustom();renderReading();renderGrammar();renderVocab();renderGrades();renderStreak();loadVoiceControls();
+renderToday();renderModules();renderNoon();renderCustom();renderReading();renderGrammar();renderVocab();renderGrades();renderStreak();updateFocusSummary();loadVoiceControls();
 if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
