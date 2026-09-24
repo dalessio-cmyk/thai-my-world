@@ -303,21 +303,29 @@ function newQuiz(){
 }
 let flashIndex=0;
 function flashPool(){
-  if(!selectedFocus.length)return voicePhrases;
-  const items=[];
-  selectedFocus.forEach(k=>{
-    const set=vocabSets[k];
-    if(set)set.phrases.forEach(p=>items.push({en:p[2],th:p[0],phon:p[1],note:"From "+set.name}));
-  });
-  return items.length?items:voicePhrases;
+  const visual=(typeof visualCardsForFocus==="function")?visualCardsForFocus(selectedFocus):[];
+  let phraseItems=[];
+  if(!selectedFocus.length){
+    phraseItems=voicePhrases.slice();
+  }else{
+    selectedFocus.forEach(k=>{
+      const set=vocabSets[k];
+      if(set)set.phrases.forEach(p=>phraseItems.push({en:p[2],th:p[0],phon:p[1],note:"From "+set.name}));
+    });
+  }
+  if(!phraseItems.length)phraseItems=voicePhrases.slice();
+  return [...visual,...phraseItems];
 }
 function renderFlashcard(){
   const pool=flashPool();
   if(!pool.length)return;
   const p=pool[flashIndex%pool.length];
-  document.getElementById("flashCard").innerHTML=`<div class="label">You say this in English</div><div class="bigline">${p.en}</div>
+  const visual=p.image?`<div class="flash-image-wrap"><img src="${p.image}" alt="${p.alt||p.en||"Visual Thai cue"}"></div>`:"";
+  document.getElementById("flashCard").innerHTML=`<div class="label">${p.image?"Look at the image and say the Thai":"You say this in English"}</div>
+  ${visual}<div class="bigline flash-prompt">${p.en}</div>
+  <div class="tiny flash-counter">Card ${flashIndex%pool.length+1} of ${pool.length}</div>
   <div class="actions"><button onclick="document.getElementById('flashAnswer').classList.add('show')">Show Thai</button></div>
-  <div class="quiz-answer" id="flashAnswer"><div class="thai">${p.th}</div><div class="phon">${p.phon}</div><div class="note">${p.note}</div>
+  <div class="quiz-answer" id="flashAnswer"><div class="thai">${p.th}</div><div class="phon">${p.phon}</div><div class="note">${p.note||""}</div>
   <div class="actions"><button onclick='speak(${JSON.stringify(p.th)})'>Hear it</button>
   <button onclick="record('speaking',true);nextFlash()">Got it</button><button onclick="record('speaking',false);nextFlash()">Need it again</button></div></div>`;
 }
@@ -331,6 +339,59 @@ function renderReading(){
   <h3 style="margin:18px 2px 8px">Vowels</h3><div class="grid two">${vowels}</div>
   <h3 style="margin:18px 2px 8px">Consonants</h3><div class="grid two">${letters}</div>`;
 }
+function todaysAlphabetLetters(){
+  const picked=selectToday();
+  const source=picked.map(x=>x[0][0]).join("")+" "+(lesson.answer||"");
+  const found=[];
+  thaiLetters.forEach(l=>{if(source.includes(l[0])&&!found.some(x=>x[0]===l[0]))found.push(l)});
+  const fallback=["ก","ด","ม","พ","น","ต","ท","อ","ห","ค"];
+  fallback.forEach(ch=>{
+    const l=thaiLetters.find(x=>x[0]===ch);
+    if(l&&!found.some(x=>x[0]===ch))found.push(l);
+  });
+  return found.slice(0,5);
+}
+function markLetter(ch,val){
+  scores["letter-"+ch]=val;
+  localStorage.setItem("thaiWorldScores",JSON.stringify(scores));
+  record("reading",val===2);
+  renderAlphabet();
+}
+function alphabetLetterCard(l,featured=false){
+  const s=scores["letter-"+l[0]]||0;
+  return `<div class="alphabet-card ${featured?"featured":""}">
+    <div class="label">${featured?"Today's letter":l[3]+" class"}</div>
+    <div class="alphabet-letter">${l[0]}</div>
+    <div class="alphabet-name">${l[1]}</div>
+    <div class="phon">${l[2]}</div>
+    <div class="alphabet-example"><strong>${l[4]}</strong><span>${l[5]}</span></div>
+    <div class="actions">
+      <button onclick='speak(${JSON.stringify(l[4])})'>Hear example</button>
+      <button class="${s===2?"good":""}" onclick='markLetter(${JSON.stringify(l[0])},2)'>Know</button>
+      <button class="${s===1?"warn":""}" onclick='markLetter(${JSON.stringify(l[0])},1)'>Again</button>
+    </div>
+  </div>`;
+}
+function renderAlphabet(){
+  const el=document.getElementById("alphabetHome");
+  if(!el)return;
+  const today=todaysAlphabetLetters();
+  const vowels=thaiVowels.map(v=>`<button class="vowel-tile" onclick='speak(${JSON.stringify(v[3])})'>
+    <strong>${v[0]}</strong><span>${v[1]}</span><small>${v[3]} · ${v[4]}</small>
+  </button>`).join("");
+  el.innerHTML=`
+    <div class="card alphabet-intro">
+      <div class="label">Today's 3-5 letters</div>
+      <div class="bigline">Start with letters inside phrases you are already saying.</div>
+      <div class="note">Recognize the shape, say its sound, then hear the familiar example word. Missed letters stay marked for review.</div>
+    </div>
+    <div class="alphabet-today-grid">${today.map(l=>alphabetLetterCard(l,true)).join("")}</div>
+    <div class="alphabet-section-title"><h3>All 44 consonants</h3><span class="tiny">Tap the example word to hear Thai.</span></div>
+    <div class="alphabet-grid">${thaiLetters.map(l=>alphabetLetterCard(l,false)).join("")}</div>
+    <div class="alphabet-section-title"><h3>Vowel forms</h3><span class="tiny">Learn the shape inside a useful word.</span></div>
+    <div class="vowel-grid">${vowels}</div>`;
+}
+
 function renderGrammar(){
   document.getElementById("grammarHome").innerHTML=grammarPatterns.map(g=>`<div class="card" style="margin-bottom:12px"><div class="label">${g.title}</div><div class="eng">Your phrase: <strong>${g.yourEnglish}</strong></div><div class="thai">${g.thai}</div><div class="bigline">${g.formula}</div><div class="note">${g.explanation}</div>
   <div style="margin-top:12px">${g.swaps.map(s=>`<div class="step"><div class="num">↔</div><div><strong>${s[0]}</strong> = ${s[1]}<br><span class="thai-mini">${s[2]}</span><br><span class="tiny">${s[3]}</span></div></div>`).join("")}</div>
@@ -376,7 +437,7 @@ function renderStreak(){
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active")); b.classList.add("active");
   document.querySelectorAll(".section").forEach(x=>x.classList.remove("active")); document.getElementById(b.dataset.tab).classList.add("active");
-  if(b.dataset.tab==="practice")newQuiz(); if(b.dataset.tab==="flashcards")renderFlashcard(); if(b.dataset.tab==="grades")renderGrades();
+  if(b.dataset.tab==="practice")newQuiz(); if(b.dataset.tab==="flashcards")renderFlashcard(); if(b.dataset.tab==="alphabet")renderAlphabet(); if(b.dataset.tab==="grades")renderGrades();
 });
 document.getElementById("revealScenario").onclick=()=>document.getElementById("scenarioAnswer").classList.toggle("show");
 const changeFocusBtn=document.getElementById("changeFocusBtn");
@@ -398,5 +459,5 @@ if(importEl)importEl.onchange=async e=>{
   const file=e.target.files&&e.target.files[0];if(!file)return;
   try{const data=JSON.parse(await file.text());if(data.scores)localStorage.setItem("thaiWorldScores",JSON.stringify(data.scores));if(data.custom)localStorage.setItem("thaiWorldCustom",JSON.stringify(data.custom));if(data.dailyStats)localStorage.setItem("thaiWorldDailyStats",JSON.stringify(data.dailyStats));if(data.selectedFocus)localStorage.setItem("thaiFocusSets",JSON.stringify(data.selectedFocus));if(data.voiceProvider)localStorage.setItem("thaiVoiceProvider",data.voiceProvider);if(data.neuralVoiceName)localStorage.setItem("thaiNeuralVoice",data.neuralVoiceName);if(data.neuralBackendUrl)localStorage.setItem("thaiNeuralBackendUrl",data.neuralBackendUrl);if(data.speechMode)localStorage.setItem("thaiSpeechMode",data.speechMode);document.getElementById("backupStatus").textContent="Backup restored. Reopen the app."}catch(err){document.getElementById("backupStatus").textContent="That backup file could not be read."}
 };
-renderToday();renderModules();renderNoon();renderCustom();renderReading();renderGrammar();renderVocab();renderGrades();renderStreak();updateFocusSummary();loadVoiceControls();
+renderToday();renderModules();renderNoon();renderCustom();renderReading();renderAlphabet();renderGrammar();renderVocab();renderGrades();renderStreak();updateFocusSummary();loadVoiceControls();
 if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
