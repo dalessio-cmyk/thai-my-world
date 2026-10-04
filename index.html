@@ -25,6 +25,7 @@
 
   <nav id="nav">
     <button data-tab="today" class="active">Today</button>
+    <button data-tab="teacher">Teacher</button>
     <button data-tab="modules">My World</button>
     <button data-tab="practice">Practice</button><button data-tab="flashcards">Flashcards</button><button data-tab="reading">Read</button><button data-tab="alphabet">Alphabet</button><button data-tab="grammar">Build</button><button data-tab="vocabulary">Words</button><button data-tab="grades">Grades</button>
     <button data-tab="noon">Noon</button>
@@ -114,6 +115,91 @@
       <div class="note" id="dailyNoonNote"></div>
       <div class="actions"><button id="dailyNoonSpeak">Hear it</button></div>
     </div>
+  </section>
+
+  <section id="teacher" class="section">
+    <div class="hero">
+      <div class="eyebrow">Interactive teacher</div>
+      <h2>Speak Thai, get immediate feedback</h2>
+      <p>Practice today's lesson, rehearse real situations, and repeat weak phrases aloud. The voice teacher works now; HeyGen LiveAvatar can add the live video layer.</p>
+    </div>
+
+    <div class="teacher-layout">
+      <div class="card teacher-stage-card">
+        <div class="teacher-stage">
+          <video id="teacherAvatarVideo" autoplay playsinline></video>
+          <div id="teacherAvatarFallback" class="teacher-avatar-fallback">
+            <div class="teacher-orb" aria-hidden="true"><span>ครู</span></div>
+            <strong>Thai Voice Teacher</strong>
+            <span>Listen. Speak. Correct. Repeat.</span>
+          </div>
+          <div class="teacher-avatar-badge" id="teacherAvatarBadge">VOICE TEACHER</div>
+        </div>
+        <div class="actions">
+          <button id="teacherConnectAvatar">Start video avatar</button>
+          <button id="teacherDisconnectAvatar" disabled>End avatar</button>
+        </div>
+        <div class="note" id="teacherAvatarStatus">Voice Teacher is ready.</div>
+      </div>
+
+      <div class="card teacher-workbench">
+        <div class="label">Teacher mode</div>
+        <div class="teacher-mode-row">
+          <button class="teacher-mode active" data-mode="today">Today's lesson</button>
+          <button class="teacher-mode" data-mode="roleplay">Roleplay</button>
+          <button class="teacher-mode" data-mode="pronunciation">Weak phrases</button>
+        </div>
+
+        <div class="form-row" id="teacherRoleplayRow" style="display:none;margin-top:12px">
+          <label for="teacherRoleplaySelect">Situation</label>
+          <select id="teacherRoleplaySelect"></select>
+        </div>
+
+        <div class="teacher-prompt-card">
+          <div class="teacher-prompt-meta">
+            <span id="teacherContext">Say this naturally in Thai.</span>
+            <span id="teacherCounter"></span>
+          </div>
+          <div class="bigline" id="teacherPrompt"></div>
+          <div class="thai teacher-hidden" id="teacherTargetThai"></div>
+          <div class="phon teacher-hidden" id="teacherTargetPhon"></div>
+        </div>
+
+        <div class="actions teacher-primary-actions">
+          <button id="teacherHear">Hear teacher</button>
+          <button id="teacherSpeakNow" class="good">Speak now</button>
+          <button id="teacherShowThai">Show Thai</button>
+        </div>
+        <div class="actions">
+          <button id="teacherPrevious">Previous</button>
+          <button id="teacherNext">Next</button>
+        </div>
+
+        <div class="teacher-result" id="teacherResult" aria-live="polite"></div>
+        <div class="note" id="teacherSpeechSupport"></div>
+        <div class="tiny" style="margin-top:8px">Current scoring measures how closely browser speech recognition matches the target words. It does not yet grade Thai tones. Azure pronunciation scoring can be added to the secure backend for tone-level feedback.</div>
+      </div>
+    </div>
+
+    <details class="card teacher-setup">
+      <summary>Avatar setup</summary>
+      <div class="note">Permanent HeyGen API keys stay on a server. Never put them into this page or GitHub Pages.</div>
+      <div class="form-row" style="margin-top:12px">
+        <label for="teacherBackendUrl">Secure teacher backend</label>
+        <input id="teacherBackendUrl" type="url" placeholder="https://thai-my-world.dalessioinc.workers.dev">
+      </div>
+      <div class="form-row">
+        <label for="teacherManualToken">Temporary LiveAvatar session token (optional)</label>
+        <input id="teacherManualToken" type="password" autocomplete="off" placeholder="Paste a short-lived session token for testing">
+      </div>
+      <div class="form-row">
+        <label for="teacherAvatarMode">LiveAvatar mode</label>
+        <select id="teacherAvatarMode">
+          <option value="FULL">Full - easiest first connection</option>
+          <option value="LITE">Lite - custom AI/voice pipeline</option>
+        </select>
+      </div>
+    </details>
   </section>
 
   <section id="modules" class="section">
@@ -225,7 +311,7 @@
   </section>
 
   <footer>
-    Pronunciation uses Google Chirp 3 HD neural Thai online, with your device's Thai voice as a fallback. Visual flashcards and alphabet practice are built around words and phrases from your daily life.
+    Pronunciation uses Google Chirp 3 HD neural Thai online, with your device's Thai voice as a fallback. Teacher mode adds spoken practice, roleplay, and word-match feedback; LiveAvatar video can be added through a secure session token.
   </footer>
 </div>
 
@@ -246,5 +332,6 @@
 <script src="vocab.js"></script>
 <script src="visuals.js"></script>
 <script src="app.js"></script>
+<script src="teacher.js"></script>
 </body>
 </html>
