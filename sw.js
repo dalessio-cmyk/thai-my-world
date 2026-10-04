@@ -1,4 +1,4 @@
-const CACHE='thai-my-world-v5';
+const CACHE='thai-my-world-v6';
 const ASSETS=[
   './',
   './index.html',
@@ -20,7 +20,8 @@ const ASSETS=[
   './grammar.js',
   './vocab.js',
   './visuals.js',
-  './app.js'
+  './app.js',
+  './teacher.js'
 ];
 
 self.addEventListener('install', event => {
