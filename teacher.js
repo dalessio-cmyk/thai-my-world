@@ -231,6 +231,16 @@
     setText("teacherLiveStatus", message);
   }
 
+  function revealGeminiSetup(message){
+    const setup=el("teacherSetup");
+    if(setup){
+      setup.open=true;
+      setup.scrollIntoView({behavior:"smooth",block:"center"});
+    }
+    setText("teacherLiveStatus",message);
+    setTimeout(()=>el("teacherAccessCode")?.focus(),350);
+  }
+
   async function connectLive(){
     if(liveSession) return;
     let session;
@@ -239,7 +249,12 @@
       if(backend.protocol !== "https:" || backend.username || backend.password || backend.search || backend.hash)
         throw new Error("Use an HTTPS backend URL without credentials or query parameters.");
       const code = el("teacherAccessCode").value.trim();
-      if(!code) throw new Error("Enter your private teacher access code in Gemini setup first.");
+      if(!code){
+        revealGeminiSetup("One-time setup required: enter your private teacher access code below, then tap Start Gemini Live again.");
+        el("teacherConnectLive").disabled = false;
+        el("teacherConnectLive").textContent = "Start Gemini Live";
+        return;
+      }
       if(!navigator.mediaDevices?.getUserMedia || !window.AudioWorkletNode) throw new Error("This browser cannot stream live audio. Voice Teacher still works.");
       if(recognition) { recognition.abort(); recognition = null; }
       window.speechSynthesis?.cancel();
