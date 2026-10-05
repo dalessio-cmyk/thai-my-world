@@ -1,4 +1,4 @@
-const CACHE='thai-my-world-v6';
+const CACHE='thai-my-world-v7';
 const ASSETS=[
   './',
   './index.html',
@@ -21,7 +21,9 @@ const ASSETS=[
   './vocab.js',
   './visuals.js',
   './app.js',
-  './teacher.js'
+  './teacher.js',
+  './gemini-live.js',
+  './gemini-pcm-worklet.js'
 ];
 
 self.addEventListener('install', event => {
@@ -31,20 +33,24 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+    caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith("thai-my-world-") && k !== CACHE).map(k => caches.delete(k))))
   );
   self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
+  const assets = new Set(ASSETS.map(path => new URL(path, self.registration.scope).href));
+  if (event.request.method !== 'GET' || url.origin !== self.location.origin || !assets.has(url.href)) return;
   event.respondWith(
     fetch(event.request)
       .then(response => {
-        const copy = response.clone();
-        caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(()=>{});
+        if(response.ok){
+          const copy = response.clone();
+          event.waitUntil(caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(()=>{}));
+        }
         return response;
       })
-      .catch(() => caches.match(event.request).then(r => r || caches.match('./index.html')))
+      .catch(() => caches.match(event.request).then(r => r || (event.request.mode === 'navigate' ? caches.match('./index.html') : Response.error())))
   );
 });

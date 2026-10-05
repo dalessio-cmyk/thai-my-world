@@ -3,6 +3,7 @@ name: Check Thai App
 on:
   push:
     branches: ["main"]
+  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -10,8 +11,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - name: Check JavaScript syntax
         run: |
+          node --check teacher.js
+          node --check gemini-live.js
+          node --check gemini-pcm-worklet.js
+          node --check sw.js
+          node --check backend/cloudflare-worker.js
+          node --check backend/gemini-live.js
           node --check app.js
           node --check voice.js
           node --check letters.js
@@ -28,3 +38,5 @@ jobs:
           node --check data/restaurant.js
           node --check data/social.js
           node --check data/partners.js
+      - name: Test live teacher security and lifecycle
+        run: node --test tests/*.test.mjs

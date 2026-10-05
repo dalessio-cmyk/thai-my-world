@@ -121,25 +121,30 @@
     <div class="hero">
       <div class="eyebrow">Interactive teacher</div>
       <h2>Speak Thai, get immediate feedback</h2>
-      <p>Practice today's lesson, rehearse real situations, and repeat weak phrases aloud. The voice teacher works now; HeyGen LiveAvatar can add the live video layer.</p>
+      <p>Practice today's lesson, rehearse real situations, and repeat weak phrases aloud. The voice teacher works now. Gemini Live adds a real-time Thai conversation with spoken feedback.</p>
     </div>
 
     <div class="teacher-layout">
       <div class="card teacher-stage-card">
         <div class="teacher-stage">
-          <video id="teacherAvatarVideo" autoplay playsinline></video>
-          <div id="teacherAvatarFallback" class="teacher-avatar-fallback">
+          <div id="teacherVoiceVisual" class="teacher-avatar-fallback">
             <div class="teacher-orb" aria-hidden="true"><span>ครู</span></div>
             <strong>Thai Voice Teacher</strong>
             <span>Listen. Speak. Correct. Repeat.</span>
           </div>
-          <div class="teacher-avatar-badge" id="teacherAvatarBadge">VOICE TEACHER</div>
+          <div class="teacher-avatar-badge" id="teacherLiveBadge">VOICE TEACHER</div>
         </div>
         <div class="actions">
-          <button id="teacherConnectAvatar">Start video avatar</button>
-          <button id="teacherDisconnectAvatar" disabled>End avatar</button>
+          <button id="teacherConnectLive">Start Gemini Live</button>
+          <button id="teacherDisconnectLive" disabled>End live</button>
+          <button id="teacherMuteLive" disabled>Mute microphone</button>
         </div>
-        <div class="note" id="teacherAvatarStatus">Voice Teacher is ready.</div>
+        <div class="note" id="teacherLiveStatus" role="status">Voice Teacher is ready.</div>
+        <p class="tiny">Live audio and transcripts, with a decorative teacher orb—not video. Your microphone streams to Google only during a live session. Sessions end after nine minutes or when you leave this tab.</p>
+        <div class="label">You said</div><p id="teacherLiveHeard" class="thai"></p>
+        <div class="label">Gemini teacher</div><p id="teacherLiveReply" aria-live="polite"></p>
+        <p class="tiny">The last six conversation turns stay on this device and are sent with your lesson when you start again. Live conversation does not change word-match scores. Use “Speak now” for scored practice.</p>
+        <button id="teacherClearMemory">Clear conversation memory</button>
       </div>
 
       <div class="card teacher-workbench">
@@ -182,23 +187,17 @@
     </div>
 
     <details class="card teacher-setup">
-      <summary>Avatar setup</summary>
-      <div class="note">Permanent HeyGen API keys stay on a server. Never put them into this page or GitHub Pages.</div>
+      <summary>Gemini setup</summary>
+      <div class="note">Your Gemini API key stays in the server’s encrypted secrets. Google AI Ultra is not an unlimited API plan; activate eligible developer credits and check API billing in AI Studio.</div>
       <div class="form-row" style="margin-top:12px">
         <label for="teacherBackendUrl">Secure teacher backend</label>
         <input id="teacherBackendUrl" type="url" placeholder="https://thai-my-world.dalessioinc.workers.dev">
       </div>
       <div class="form-row">
-        <label for="teacherManualToken">Temporary LiveAvatar session token (optional)</label>
-        <input id="teacherManualToken" type="password" autocomplete="off" placeholder="Paste a short-lived session token for testing">
+        <label for="teacherAccessCode">Private teacher access code</label>
+        <input id="teacherAccessCode" type="password" autocomplete="off" placeholder="Your server’s teacher access code, never a Google API key">
       </div>
-      <div class="form-row">
-        <label for="teacherAvatarMode">LiveAvatar mode</label>
-        <select id="teacherAvatarMode">
-          <option value="FULL">Full - easiest first connection</option>
-          <option value="LITE">Lite - custom AI/voice pipeline</option>
-        </select>
-      </div>
+      <p class="tiny">The access code is used once to request a session and is not saved. Only use a backend you trust. No Google API key or service-account JSON belongs in this page.</p>
     </details>
   </section>
 
@@ -311,7 +310,7 @@
   </section>
 
   <footer>
-    Pronunciation uses Google Chirp 3 HD neural Thai online, with your device's Thai voice as a fallback. Teacher mode adds spoken practice, roleplay, and word-match feedback; LiveAvatar video can be added through a secure session token.
+    Pronunciation uses Google Chirp 3 HD neural Thai online, with your device's Thai voice as a fallback. Teacher mode adds spoken practice, roleplay, and word-match feedback; Gemini Live adds optional two-way conversation through secure, short-lived sessions.
   </footer>
 </div>
 
@@ -332,6 +331,7 @@
 <script src="vocab.js"></script>
 <script src="visuals.js"></script>
 <script src="app.js"></script>
+<script src="gemini-live.js"></script>
 <script src="teacher.js"></script>
 </body>
 </html>

@@ -17,9 +17,12 @@
   let currentIndex = 0;
   let revealThai = false;
   let recognition = null;
-  let avatarSession = null;
-  let avatarConnected = false;
-  let avatarMode = "FULL";
+  let liveSession = null;
+  let liveConnected = false;
+  let liveMemory = [];
+  try { liveMemory = JSON.parse(localStorage.getItem("thaiTeacherLiveMemory") || "[]"); } catch (_) {}
+  if (!Array.isArray(liveMemory)) liveMemory = [];
+  let turn = {user: "", teacher: ""};
   const attempts = JSON.parse(localStorage.getItem("thaiTeacherAttempts") || "{}");
 
   function el(id){ return document.getElementById(id); }
@@ -102,6 +105,7 @@
   }
 
   function renderTeacher(){
+    if(liveConnected) liveSession.text("The learner selected this practice context: " + JSON.stringify(lessonContext()));
     const item=currentItem();
     if(!item) return;
     const p=item.p;
@@ -125,14 +129,7 @@
   }
 
   async function teacherSpeak(text){
-    if(avatarConnected && avatarSession){
-      try{
-        avatarSession.repeat(text);
-        return;
-      }catch(err){
-        setText("teacherAvatarStatus","Avatar speech failed, so I switched to the Thai voice.");
-      }
-    }
+    if(liveConnected && liveSession){ liveSession.text("Say this Thai phrase slowly, then invite me to repeat: " + text); return; }
     try{ await speak(text,"natural"); }catch(_){ }
   }
 
@@ -144,6 +141,7 @@
   }
 
   function listen(){
+    if(liveSession) liveSession.stop("Switched to scored phrase practice. Voice Teacher is ready.");
     const item=currentItem();
     if(!item) return;
     if(!SpeechRecognition){
@@ -200,64 +198,71 @@
     select.onchange=()=>{roleplayKey=select.value;localStorage.setItem("thaiTeacherRoleplay",roleplayKey);currentIndex=0;revealThai=false;renderTeacher();};
   }
 
-  function setAvatarUi(connected, message){
-    avatarConnected=connected;
-    const fallback=el("teacherAvatarFallback"),video=el("teacherAvatarVideo"),connect=el("teacherConnectAvatar"),disconnect=el("teacherDisconnectAvatar"),badge=el("teacherAvatarBadge");
-    if(fallback)fallback.style.display=connected?"none":"flex";
-    if(video)video.style.display=connected?"block":"none";
-    if(connect)connect.disabled=connected;
-    if(disconnect)disconnect.disabled=!connected;
-    if(badge)badge.textContent=connected?"LIVE AVATAR":"VOICE TEACHER";
-    setText("teacherAvatarStatus",message|| (connected?"LiveAvatar connected.":"Voice teacher is ready. Connect HeyGen when you want the live video layer."));
+  function lessonContext(){
+    const item = currentItem();
+    return {
+      mode: teacherMode, situation: roleplayLabels[roleplayKey],
+      current: item ? {thai: item.p[0], english: item.p[2], id: phraseId(item)} : null,
+      lesson: pool().slice(0, 12).map(i => ({thai: i.p[0], english: i.p[2]})),
+      weak: weakPool().slice(0, 6).map(i => ({thai: i.p[0], english: i.p[2]})),
+      recentConversation: liveMemory.slice(-6)
+    };
   }
 
-  async function attachAvatarVideo(){
-    const video=el("teacherAvatarVideo");
-    if(!video||!avatarSession)return false;
-    for(let i=0;i<30;i++){
-      try{ avatarSession.attach(video); await video.play().catch(()=>{}); if(video.srcObject || video.readyState>=2)return true; }catch(_){ }
-      await new Promise(r=>setTimeout(r,350));
-    }
-    return false;
-  }
-
-  async function connectAvatar(){
-    if(avatarConnected)return;
-    const btn=el("teacherConnectAvatar"); if(btn){btn.disabled=true;btn.textContent="Connecting...";}
-    setText("teacherAvatarStatus","Requesting a secure LiveAvatar session...");
-    try{
-      const manual=(el("teacherManualToken")?.value||"").trim();
-      avatarMode=el("teacherAvatarMode")?.value||"FULL";
-      let token=manual;
-      if(!token){
-        const backend=(el("teacherBackendUrl")?.value||neuralBackendUrl||"").trim().replace(/\/$/,"");
-        if(!backend)throw new Error("Add the teacher backend URL or a temporary session token in Avatar setup.");
-        const res=await fetch(backend+"/liveavatar-token",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:avatarMode})});
-        let data={}; try{data=await res.json();}catch(_){ }
-        if(!res.ok)throw new Error(data.error||"LiveAvatar token service is not configured yet.");
-        token=data.session_token||data.sessionToken;
-        avatarMode=data.mode||avatarMode;
-      }
-      if(!token)throw new Error("No LiveAvatar session token was returned.");
-      setText("teacherAvatarStatus","Loading the LiveAvatar video engine...");
-      const sdk=await import("https://cdn.jsdelivr.net/npm/@heygen/liveavatar-web-sdk@0.0.19/+esm");
-      avatarSession=new sdk.LiveAvatarSession(token,{autoKeepAlive:true,voiceChat:{defaultMuted:true}});
-      await avatarSession.start();
-      const attached=await attachAvatarVideo();
-      setAvatarUi(true,attached?"LiveAvatar connected. Teacher speech will use the avatar when supported by the session.":"LiveAvatar connected, but the video stream is still starting.");
-    }catch(err){
-      avatarSession=null;
-      setAvatarUi(false,`${err.message||err} Voice Teacher still works without video.`);
-    }finally{
-      if(btn){btn.disabled=avatarConnected;btn.textContent="Start video avatar";}
+  function saveTurn(){
+    if(turn.user || turn.teacher){
+      liveMemory.push({user: turn.user.slice(0, 1500), teacher: turn.teacher.slice(0, 2500)});
+      liveMemory = liveMemory.slice(-6);
+      try { localStorage.setItem("thaiTeacherLiveMemory", JSON.stringify(liveMemory)); } catch (_) {}
+      turn = {user: "", teacher: ""};
     }
   }
 
-  async function disconnectAvatar(){
-    try{ if(avatarSession)await avatarSession.stop(); }catch(_){ }
-    avatarSession=null;
-    const video=el("teacherAvatarVideo"); if(video){try{video.pause();}catch(_){ } video.srcObject=null;}
-    setAvatarUi(false,"Video avatar ended. Voice Teacher is still active.");
+  function setLiveUi(connected, message){
+    liveConnected = connected;
+    if(!connected) liveSession = null;
+    el("teacherConnectLive").disabled = connected;
+    el("teacherConnectLive").textContent = "Start Gemini Live";
+    el("teacherDisconnectLive").disabled = !connected;
+    el("teacherMuteLive").disabled = !connected;
+    el("teacherMuteLive").textContent = "Mute microphone";
+    setText("teacherLiveBadge", connected ? "GEMINI LIVE · MICROPHONE ON" : "VOICE TEACHER");
+    setText("teacherLiveStatus", message);
+  }
+
+  async function connectLive(){
+    if(liveSession) return;
+    let session;
+    try {
+      const backend = new URL(el("teacherBackendUrl").value.trim());
+      if(backend.protocol !== "https:" || backend.username || backend.password || backend.search || backend.hash)
+        throw new Error("Use an HTTPS backend URL without credentials or query parameters.");
+      const code = el("teacherAccessCode").value.trim();
+      if(!code) throw new Error("Enter your private teacher access code in Gemini setup first.");
+      if(!navigator.mediaDevices?.getUserMedia || !window.AudioWorkletNode) throw new Error("This browser cannot stream live audio. Voice Teacher still works.");
+      if(recognition) { recognition.abort(); recognition = null; }
+      window.speechSynthesis?.cancel();
+      if(typeof currentAudio !== "undefined" && currentAudio) currentAudio.pause();
+      el("teacherConnectLive").disabled = true;
+      el("teacherConnectLive").textContent = "Connecting…";
+      el("teacherDisconnectLive").disabled = false;
+      setText("teacherLiveStatus", "Connecting securely. Allow microphone access when prompted.");
+      liveSession = new window.GeminiTeacher({
+        status: setLiveUi,
+        transcript: (who, text) => {
+          turn[who] = (turn[who] + text).slice(-4000);
+          setText(who === "user" ? "teacherLiveHeard" : "teacherLiveReply", turn[who]);
+        },
+        turnComplete: saveTurn
+      });
+      session = liveSession;
+      el("teacherAccessCode").value = "";
+      await session.start(backend.href.replace(/\/$/, ""), code, lessonContext());
+    } catch(err) {
+      if(session?.closed) return;
+      const message = (err.name === "NotAllowedError" ? "Microphone permission was denied." : err.message || "Connection failed.") + " Voice Teacher is ready.";
+      if(liveSession) liveSession.stop(message); else setLiveUi(false, message);
+    }
   }
 
   function init(){
@@ -276,10 +281,27 @@
     el("teacherShowThai")?.addEventListener("click",()=>{revealThai=!revealThai;renderTeacher();});
     el("teacherNext")?.addEventListener("click",next);
     el("teacherPrevious")?.addEventListener("click",previous);
-    el("teacherConnectAvatar")?.addEventListener("click",connectAvatar);
-    el("teacherDisconnectAvatar")?.addEventListener("click",disconnectAvatar);
+    el("teacherConnectLive")?.addEventListener("click",connectLive);
+    el("teacherDisconnectLive")?.addEventListener("click",()=>liveSession?.stop());
+    el("teacherMuteLive")?.addEventListener("click",()=>{
+      if(!liveConnected)return;
+      const muted = liveSession.mute();
+      setText("teacherMuteLive", muted ? "Unmute microphone" : "Mute microphone");
+      setText("teacherLiveBadge", muted ? "GEMINI LIVE · MUTED" : "GEMINI LIVE · MICROPHONE ON");
+    });
+    el("teacherClearMemory")?.addEventListener("click",()=>{
+      liveSession?.stop(); liveMemory = []; turn = {user: "", teacher: ""};
+      localStorage.removeItem("thaiTeacherLiveMemory");
+      setText("teacherLiveHeard", ""); setText("teacherLiveReply", "");
+      setText("teacherLiveStatus", "Conversation memory cleared. Lesson progress is preserved.");
+    });
+    window.addEventListener("pagehide",()=>liveSession?.stop());
+    document.addEventListener("visibilitychange",()=>{if(document.hidden)liveSession?.stop("Live paused because the app was hidden. Voice Teacher is ready.");});
+    document.querySelectorAll('nav button').forEach(button=>button.addEventListener("click",()=>{
+      if(button.dataset.tab !== "teacher") liveSession?.stop();
+    }));
     document.querySelector('nav button[data-tab="teacher"]')?.addEventListener("click",renderTeacher);
-    setAvatarUi(false,"Voice Teacher is ready now. LiveAvatar video will activate when a secure HeyGen session token is available.");
+    setLiveUi(false,"Voice Teacher is ready. Start Gemini Live for an interactive conversation after server setup.");
     renderTeacher();
   }
 

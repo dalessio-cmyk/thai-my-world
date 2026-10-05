@@ -1,3 +1,5 @@
+import { geminiLive } from './gemini-live.js';
+
 const ALLOWED_ORIGINS = new Set([
   "https://dalessio-cmyk.github.io"
 ]);
@@ -109,6 +111,7 @@ function decodeBase64(base64) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === "/gemini-live-token") return geminiLive(request, env);
     const origin = request.headers.get("Origin") || "";
 
     if (request.method === "OPTIONS") {

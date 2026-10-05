@@ -1,6 +1,15 @@
-name = "thai-my-world-voice"
+name = "thai-my-world"
 main = "cloudflare-worker.js"
-compatibility_date = "2026-09-23"
+compatibility_date = "2026-10-05"
 
-# Add the secret after deployment:
-# npx wrangler secret put GOOGLE_TTS_API_KEY
+[vars]
+APP_ORIGIN = "https://dalessio-cmyk.github.io"
+GEMINI_LIVE_MODEL = "gemini-3.8-live"
+
+[[ratelimits]]
+name = "TEACHER_RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 5, period = 60 }
+
+# Encrypted secrets: GOOGLE_SERVICE_ACCOUNT_JSON (existing TTS),
+# GEMINI_API_KEY, TEACHER_ACCESS_CODE (random, at least 32 characters).

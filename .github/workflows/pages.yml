@@ -23,12 +23,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify before publishing
+        run: |
+          find . -name '*.js' -not -path './.git/*' -exec node --check {} \;
+          node --test tests/*.test.mjs
+      - name: Stage public assets only
+        run: |
+          mkdir _site
+          cp index.html manifest.json styles.css app.js teacher.js gemini-live.js gemini-pcm-worklet.js sw.js data-bootstrap.js voice.js letters.js grammar.js vocab.js visuals.js noon.js _site/
+          cp -R data _site/data
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload site
         uses: actions/upload-pages-artifact@v4
         with:
-          path: "."
+          path: "_site"
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
