@@ -461,3 +461,41 @@ if(importEl)importEl.onchange=async e=>{
 };
 renderToday();renderModules();renderNoon();renderCustom();renderReading();renderAlphabet();renderGrammar();renderVocab();renderGrades();renderStreak();updateFocusSummary();loadVoiceControls();
 if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
+
+
+function legacyLessonRoute(sourceEl){
+  try{
+    const direct=document.querySelector('[data-tab="today"],[data-tab="lesson"],[href="#today"],[href="#lesson"]');
+    if(direct && direct!==sourceEl){
+      if(typeof direct.click==="function"){ direct.click(); return true; }
+    }
+    const lessonNav=[...document.querySelectorAll("button,a")].find(x=>{
+      if(x===sourceEl)return false;
+      const t=(x.textContent||"").trim().toLowerCase();
+      return t==="lesson"||t==="today";
+    });
+    if(lessonNav && typeof lessonNav.click==="function"){ lessonNav.click(); return true; }
+
+    const today=document.getElementById("today");
+    if(today){
+      document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
+      today.classList.add("active");
+      document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+      document.querySelector('nav button[data-tab="today"]')?.classList.add("active");
+      today.scrollIntoView({behavior:"smooth",block:"start"});
+      return true;
+    }
+  }catch(_){}
+  return false;
+}
+
+document.addEventListener("click",event=>{
+  const control=event.target?.closest?.("button,a");
+  if(!control)return;
+  const text=(control.textContent||"").replace(/\s+/g," ").trim().toLowerCase();
+  if(text==="start lesson"||text==="begin today's lesson"||text==="begin today’s lesson"){
+    event.preventDefault();
+    event.stopPropagation();
+    legacyLessonRoute(control);
+  }
+},true);
