@@ -7,7 +7,14 @@
       await this.audio.resume();
       if (this.closed) return;
       this.abort = new AbortController();
-      this.timeout = setTimeout(() => this.stop('Connection timed out. Voice Teacher is ready.'), 25000);
+      this.cb.progress?.('Waiting for microphone permission. Choose Allow in your browser.');
+      this.timeout = setTimeout(() => this.stop('Microphone permission did not complete. Allow microphone access or open this app in Chrome or Safari, then retry.'), 60000);
+      const stream = await navigator.mediaDevices.getUserMedia({audio: {channelCount: 1, echoCancellation: true, noiseSuppression: true}, video: false});
+      if (this.closed) { stream.getTracks().forEach(t => t.stop()); return; }
+      this.stream = stream;
+      clearTimeout(this.timeout);
+      this.cb.progress?.('Microphone ready. Requesting a secure Gemini session…');
+      this.timeout = setTimeout(() => this.stop('Gemini connection timed out. Voice Teacher is ready.'), 25000);
       const response = await fetch(backend + '/gemini-live-token', {
         method: 'POST', headers: {'Content-Type': 'application/json', Authorization: 'Bearer ' + accessCode},
         body: '{}', cache: 'no-store', credentials: 'omit', signal: this.abort.signal
@@ -16,9 +23,6 @@
       if (!response.ok) throw new Error(data.error || 'Gemini backend is not ready.');
       if (this.closed) return;
       if (typeof data.token !== 'string' || !data.token.startsWith('auth_tokens/') || !/^models\/[a-z0-9.-]+$/.test(data.model)) throw new Error('Invalid live session response.');
-      const stream = await navigator.mediaDevices.getUserMedia({audio: {channelCount: 1, echoCancellation: true, noiseSuppression: true}, video: false});
-      if (this.closed) { stream.getTracks().forEach(t => t.stop()); return; }
-      this.stream = stream;
       await this.audio.audioWorklet.addModule('./gemini-pcm-worklet.js');
       if (this.closed) return;
       this.input = this.audio.createMediaStreamSource(stream);
@@ -32,6 +36,7 @@
         let binary = ''; for (const byte of bytes) binary += String.fromCharCode(byte);
         this.send({realtimeInput: {audio: {data: btoa(binary), mimeType: 'audio/pcm;rate=16000'}}});
       };
+      this.cb.progress?.('Secure session received. Connecting to Gemini…');
       this.socket = new WebSocket('wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained?access_token=' + encodeURIComponent(data.token));
       this.socket.onopen = () => this.send({setup: {model: data.model}});
       // Serialize Blob decoding to preserve audio/transcription order.

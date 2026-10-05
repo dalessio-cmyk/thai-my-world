@@ -220,6 +220,7 @@
 
   function setLiveUi(connected, message){
     liveConnected = connected;
+    if(connected) el("teacherAccessCode").value = "";
     if(!connected) liveSession = null;
     el("teacherConnectLive").disabled = connected;
     el("teacherConnectLive").textContent = "Start Gemini Live";
@@ -249,6 +250,7 @@
       setText("teacherLiveStatus", "Connecting securely. Allow microphone access when prompted.");
       liveSession = new window.GeminiTeacher({
         status: setLiveUi,
+        progress: message => setText("teacherLiveStatus", message),
         transcript: (who, text) => {
           turn[who] = (turn[who] + text).slice(-4000);
           setText(who === "user" ? "teacherLiveHeard" : "teacherLiveReply", turn[who]);
@@ -256,7 +258,6 @@
         turnComplete: saveTurn
       });
       session = liveSession;
-      el("teacherAccessCode").value = "";
       await session.start(backend.href.replace(/\/$/, ""), code, lessonContext());
     } catch(err) {
       if(session?.closed) return;

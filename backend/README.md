@@ -67,7 +67,7 @@ its `GOOGLE_SERVICE_ACCOUNT_JSON` secret retain their existing behavior.
    Preserve the existing `GOOGLE_SERVICE_ACCOUNT_JSON` secret.
 4. In Teacher > Gemini setup, keep the production backend URL, enter the private
    teacher access code, and select Start Gemini Live. Allow microphone access.
-   The code field clears after requesting a connection; enter it again to reconnect.
+   The code field clears after a successful connection; failed connections leave it in the field for retry. It is never stored persistently.
 
 `GEMINI_LIVE_MODEL` defaults to `gemini-3.8-live` per current Google documentation;
 change it server-side if your project has access to another compatible Live model.

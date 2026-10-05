@@ -47,7 +47,7 @@ See [backend/README.md](backend/README.md) for deployment and secret setup.
 The existing Worker serves both `/tts` and `POST /gemini-live-token`.
 GitHub Pages contains no Google credentials. A private teacher access code
 (authenticating this personal app's owner) is entered for each connection, sent
-only to the chosen HTTPS backend, then cleared from the field. It is never saved
+only to the chosen HTTPS backend, then cleared from the field after connecting (retained only in the field on failure for retry). It is never saved
 in localStorage, backup files or the service worker.
 
 The Worker authenticates the request and rate-limits it before minting a
@@ -70,7 +70,7 @@ The last six transcript turns are stored locally, included in backup/restore,
 and reused on the next live start. “Clear conversation memory” ends a current
 session and clears these turns without deleting lesson progress. Audio is not
 saved by this app. Lesson context and live audio are processed by Google under
-your project's API data terms. Service worker v7 caches only listed static app
+your project's API data terms. Service worker v8 caches only listed static app
 assets, never cross-origin requests or token responses.
 
 ## Validation
