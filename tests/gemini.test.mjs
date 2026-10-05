@@ -54,8 +54,11 @@ test('broker constrains single-use short-lived tokens and redacts upstream failu
     const response = await worker.fetch(request({body:JSON.stringify({model:'attacker-model'})}),env);
     assert.equal(response.status,200);
     assert.equal(payload.uses,1);
-    assert.equal(payload.liveConnectConstraints.model,'models/gemini-3.8-live');
-    assert.deepEqual(payload.liveConnectConstraints.config.responseModalities,['AUDIO']);
+    assert.equal(payload.liveConnectConstraints,undefined);
+    assert.ok(payload.bidiGenerateContentSetup.systemInstruction);
+    assert.deepEqual(payload.bidiGenerateContentSetup.inputAudioTranscription,{});
+    assert.equal(payload.bidiGenerateContentSetup.model,'models/gemini-3.8-live');
+    assert.deepEqual(payload.bidiGenerateContentSetup.generationConfig.responseModalities,['AUDIO']);
     assert.ok(Date.parse(payload.newSessionExpireTime)-Date.now() <= 60000);
     assert.ok(Date.parse(payload.expireTime)-Date.now() <= 600000);
     assert.ok(!JSON.stringify(await response.json()).includes(env.GEMINI_API_KEY));
