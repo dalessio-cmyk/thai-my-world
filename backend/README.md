@@ -37,8 +37,9 @@ The Google service-account JSON must never be stored in index.html, app.js, GitH
 
 ## Gemini Live teacher (October 2026)
 
-The main Worker now imports `gemini-live.js`. Deploy **both** files using Wrangler;
-pasting only `cloudflare-worker.js` is no longer sufficient. The `/tts` route and
+The main Worker imports `gemini-live.js`. Deploy both files using Wrangler, or
+use the single-file dashboard bundle described below. Pasting only
+`cloudflare-worker.js` is not sufficient. The `/tts` route and
 its `GOOGLE_SERVICE_ACCOUNT_JSON` secret retain their existing behavior.
 
 1. In Google AI Studio, choose your personal app project (for example DAlessio),
@@ -97,3 +98,20 @@ No model or system-instruction overrides are accepted from the browser.
 Protocol references: [Google ephemeral tokens](https://ai.google.dev/gemini-api/docs/live-api/ephemeral-tokens),
 [WebSocket guide](https://ai.google.dev/gemini-api/docs/live-api/get-started-websocket),
 [Cloudflare rate limits](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/).
+
+### Dashboard deployment (no Wrangler login needed)
+
+From the repository root, create a single-file bundle:
+
+```sh
+node scripts/bundle-worker.mjs /tmp/thai-my-world-worker.js
+```
+
+In the existing Worker, add a **Rate limiter** binding named
+`TEACHER_RATE_LIMITER`, namespace `1001`, limit `5`, period `60 seconds`.
+Then open **Edit code**, select the latest active version, replace `worker.js`
+with the generated bundle, and Deploy. Keep the existing TTS secret.
+Add `GEMINI_API_KEY` and `TEACHER_ACCESS_CODE` under Runtime variables and
+secrets with **Secret** checked for both, then deploy those settings.
+The source modules in this repository remain the source of truth; regenerate
+this bundle for subsequent dashboard deployments.
